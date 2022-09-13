@@ -8,5 +8,6 @@ def ftqq(FTQQ_TOKEN):
     headers = {'Content-type': 'application/x-www-form-urlencoded'}
     def send(text, desp=""):
         Form = {'text': text, 'desp': desp}
-        return requests.post(url, data=Form, headers=headers, verify=False)
+        if '失败' in text:
+            return requests.post(url, data=Form, headers=headers, verify=False)
     return send

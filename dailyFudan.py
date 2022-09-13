@@ -1,3 +1,4 @@
+import os
 import time
 from json import loads as json_loads
 from json import dumps as json_dumps
@@ -168,10 +169,10 @@ class Zlapp(Fudan):
         position = last_info["d"]["info"]['geo_api_info']
         position = json_loads(position)
 
-        if s_sfzx.__name__ == '<lambda>':
-            logging.info("上一次提交地址为: %s" % position['formattedAddress'])
-        else:
-            logging.info("上一次提交地址为: ***" )
+        # if s_sfzx.__name__ == '<lambda>':
+        #     logging.info("上一次提交地址为: %s" % position['formattedAddress'])
+        # else:
+        #     logging.info("上一次提交地址为: ***" )
         # logging.debug("上一次提交GPS为", position["position"])
 
         today = time.strftime("%Y%m%d", time.localtime())
@@ -228,7 +229,7 @@ class Zlapp(Fudan):
             captcha_text = captcha()
             #captcha_text = 'abcd'
             self.last_info.update({
-                'sfzx': s_sfzx(self.old_info),
+                'sfzx': "0",
                 'code': captcha_text
             })
             save = self.session.post(
@@ -268,6 +269,40 @@ def get_account():
     return uid, psw, IYUU_TOKEN
 
 gl_info = "快去手动填写！"
+
+def main_handler(_event, _context):
+    uid = os.environ['uid']
+    psw = os.environ['psw']
+    uname = os.environ['uname']
+    pwd = os.environ['pwd']
+    iy_info = ftqq(os.environ['iy_info'])
+    zlapp_login = 'https://uis.fudan.edu.cn/authserver/login?' \
+                  'service=https://zlapp.fudan.edu.cn/site/ncov/fudanDaily'
+    daily_fudan = Zlapp(uid, psw, url_login=zlapp_login)
+    if not daily_fudan.login():
+        iy_info("平安复旦：登陆失败", gl_info)
+        return -1
+
+    if daily_fudan.check():
+        iy_info("平安复旦：今日已提交", gl_info)
+        daily_fudan.close()
+        return 0
+
+    def captcha_info(message):
+        iy_info(message, gl_info)
+    captcha = DailyFDCaptcha(uname,pwd,daily_fudan,captcha_info)
+    daily_fudan.checkin(captcha)
+
+    # 再检查一遍
+    if daily_fudan.check():
+        iy_info("平安复旦：今日已提交", gl_info)
+        daily_fudan.close()
+        return 0 
+    else:
+        iy_info("平安复旦：本次提交失败", gl_info)
+        daily_fudan.close()
+        return -2
+    
 if __name__ == '__main__':
     uid, psw, IYUU_TOKE = get_account()
     # print(f'Check_value: {Check_value}')
