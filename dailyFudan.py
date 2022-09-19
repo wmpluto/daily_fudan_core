@@ -1,5 +1,6 @@
 import os
 import time
+from random import randint
 from json import loads as json_loads
 from json import dumps as json_dumps
 from os import path as os_path
@@ -271,6 +272,8 @@ def get_account():
 gl_info = "快去手动填写！"
 
 def main_handler(_event, _context):
+    time.sleep(randint(0, 30))
+    
     uid = os.environ['uid']
     psw = os.environ['psw']
     uname = os.environ['uname']
